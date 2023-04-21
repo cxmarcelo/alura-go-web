@@ -57,3 +57,16 @@ func InsertProduct(name, description string, price float64, quantity int) {
 	insert.Exec(name, description, price, quantity)
 	defer db.Close()
 }
+
+func DeleteProduct(id string) {
+	db := db.ConnectDatabase()
+
+	deleteQuery, err := db.Prepare("delete from products where id = $1")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	deleteQuery.Exec(id)
+
+	defer db.Close()
+}
