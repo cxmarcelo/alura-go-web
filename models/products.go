@@ -13,7 +13,7 @@ type Product struct {
 func FindAllProducts() []Product {
 	db := db.ConnectDatabase()
 
-	selecAllProducts, err := db.Query("select * from products")
+	selecAllProducts, err := db.Query("select * from products order by id asc")
 
 	if err != nil {
 		panic(err.Error())
@@ -67,6 +67,51 @@ func DeleteProduct(id string) {
 	}
 
 	deleteQuery.Exec(id)
+
+	defer db.Close()
+}
+
+func FindById(id string) Product {
+	db := db.ConnectDatabase()
+
+	productDb, err := db.Query("select * from products where id = $1", id)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	product := Product{}
+
+	for productDb.Next() {
+		var id, quantity int
+		var name, description string
+		var price float64
+
+		err = productDb.Scan(&id, &name, &description, &price, &quantity)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		product.Id = id
+		product.Name = name
+		product.Description = description
+		product.Price = price
+		product.Quantity = quantity
+	}
+
+	defer db.Close()
+	return product
+}
+
+func UpdateProduct(id int, name, description string, price float64, quantity int) {
+	db := db.ConnectDatabase()
+
+	updateScript, err := db.Prepare("update products set name = $1, description = $2, price = $3, quantity = $4 where id = $5")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	updateScript.Exec(name, description, price, quantity, id)
 
 	defer db.Close()
 }
